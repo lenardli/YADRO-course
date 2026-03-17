@@ -1,0 +1,58 @@
+@startuml endpoint_info_class
+skinparam classAttributeIconSize 0
+
+package "Controller" {
+  class "currency_controller" as Controller << (C,#FFAAAA) >> {
+    + get_app_info() : dict
+  }
+}
+
+package "Application" {
+  class AppService {
+    - _app_repository : IAppRepository
+    - _author_repository : IAuthorRepository
+    + __init__(app_repository, author_repository)
+    + get_app_info() : tuple[App, Author]
+  }
+}
+
+package "Domain" {
+  interface IAppRepository {
+    + get_app() : App
+  }
+  interface IAuthorRepository {
+    + get_author() : Author
+  }
+  class App {
+    + version : str
+    + service : str
+  }
+  class Author {
+    + name : str
+  }
+}
+
+package "Infrastructure" {
+  class ConfigAppService {
+    + {static} DEFAULT_VERSION : str
+    + {static} DEFAULT_AUTHOR : str
+    + {static} DEFAULT_SERVICE : str
+    + get_app() : App
+    + get_author() : Author
+  }
+}
+
+Controller --> AppService : uses
+Controller --> ConfigAppService : creates
+AppService --> IAppRepository : depends on
+AppService --> IAuthorRepository : depends on
+AppService --> App : returns
+AppService --> Author : returns
+ConfigAppService ..|> IAppRepository : implements
+ConfigAppService ..|> IAuthorRepository : implements
+ConfigAppService --> App : creates
+ConfigAppService --> Author : creates
+IAppRepository --> App : returns
+IAuthorRepository --> Author : returns
+
+@enduml
