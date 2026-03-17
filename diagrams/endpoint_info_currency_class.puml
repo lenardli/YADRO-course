@@ -1,0 +1,46 @@
+@startuml endpoint_info_currency_class
+skinparam classAttributeIconSize 0
+
+package "Controller" {
+  class "currency_controller" as Controller << (C,#FFAAAA) >> {
+    + get_currency_info(currency, date) : dict
+  }
+}
+
+package "Application" {
+  class CurrencyService {
+    - _repository : ICurrencyRepository
+    + __init__(repository)
+    + get_currency_info(currency_code, date_str) : Currency
+  }
+}
+
+package "Domain" {
+  interface ICurrencyRepository {
+    + get_currency(currency_code, date) : Currency
+  }
+  class Currency {
+    + date : date
+    + rates : Dict[str, float]
+  }
+}
+
+package "Infrastructure" {
+  class APICurrencyService {
+    + {static} BASE_URL : str
+    - _fetch_currency_range(code, target_date) : dict
+    - _fetch_one_from_daily(code, target_date) : dict
+    - _fetch_all_currencies(target_date) : dict
+    + get_currency(currency_code, date) : Currency
+  }
+}
+
+Controller --> CurrencyService : uses
+Controller --> APICurrencyService : creates
+CurrencyService --> ICurrencyRepository : depends on
+CurrencyService --> Currency : returns
+APICurrencyService ..|> ICurrencyRepository : implements
+APICurrencyService --> Currency : creates
+ICurrencyRepository --> Currency : returns
+
+@enduml
