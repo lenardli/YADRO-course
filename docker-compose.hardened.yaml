@@ -1,0 +1,30 @@
+services:
+  app:
+    image: rina7778/yadro-practical-course:v1.0
+    build:
+      context: .
+      dockerfile: Dockerfile
+    user: "65532:65532"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    ports:
+      - "${PORT}:${PORT}"
+    environment:
+      PORT: ${PORT}
+    networks:
+      - app-net
+    restart: unless-stopped
+
+networks:
+  app-net:
+    driver: bridge
