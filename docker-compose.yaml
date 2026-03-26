@@ -7,9 +7,6 @@ services:
     tmpfs:
       - /tmp
 
-    build:
-      context: .
-      dockerfile: Dockerfile
     ports:
       - "${PORT}:${PORT}"
     environment:
