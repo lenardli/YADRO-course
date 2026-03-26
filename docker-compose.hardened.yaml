@@ -1,9 +1,6 @@
 services:
   app:
     image: rina7778/yadro-practical-course:v1.0
-    build:
-      context: .
-      dockerfile: Dockerfile
     user: "65532:65532"
     read_only: true
     tmpfs:
