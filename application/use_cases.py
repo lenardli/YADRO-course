@@ -16,13 +16,15 @@ class CurrencyService:
     ) -> Currency:
         today = date.today()
         target_date = (
-            datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else today
-        )
+            datetime.strptime(
+                date_str,
+                "%Y-%m-%d").date() if date_str else today)
         return self._repository.get_currency(currency_code, target_date)
 
 
 class AppService:
-    def __init__(self, app_repository: IAppRepository, author_repository: IAuthorRepository) -> None:
+    def __init__(self, app_repository: IAppRepository,
+                 author_repository: IAuthorRepository) -> None:
         self._app_repository = app_repository
         self._author_repository = author_repository
 

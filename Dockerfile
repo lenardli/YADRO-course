@@ -28,3 +28,4 @@ COPY --from=build --chown=65532:65532 /app /app
 EXPOSE 8000
 
 CMD ["main.py"]
+

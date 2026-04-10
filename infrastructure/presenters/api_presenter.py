@@ -48,6 +48,7 @@ class APICurrencyService(ICurrencyRepository):
                 or not value_el.text
             ):
                 continue
-            rates[char_code_el.text.upper()] = float(value_el.text.replace(",", "."))
+            rates[char_code_el.text.upper()] = float(
+                value_el.text.replace(",", "."))
 
         return rates
