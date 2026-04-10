@@ -1,6 +1,6 @@
 services:
   app:
-    image: rina7778/yadro-practical-course:v1.0
+    image: rina7778/yadro-practical-course:${IMAGE_TAG}
     user: "65532:65532"
 
     read_only: true

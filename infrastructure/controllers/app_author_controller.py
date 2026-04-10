@@ -9,7 +9,9 @@ router = APIRouter()
 @router.get("/info")
 def get_app_info() -> dict:
     config_repository = ConfigAppService()
-    service = AppService(app_repository=config_repository, author_repository=config_repository)
+    service = AppService(
+        app_repository=config_repository,
+        author_repository=config_repository)
 
     app, author = service.get_app_info()
 
