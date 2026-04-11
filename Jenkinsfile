@@ -75,10 +75,7 @@ pipeline {
         stage('Deploy') {
             when {
                 allOf {
-                    anyOf {
-                        branch 'a.sheynova/main'
-                        expression { env.GIT_BRANCH == 'origin/a.sheynova/main' }
-                    }
+                    expression { env.GIT_BRANCH == 'origin/a.sheynova/main' }
                     expression { currentBuild.buildCauses.toString().contains('UserIdCause') }
                 }
             }
