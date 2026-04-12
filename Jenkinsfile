@@ -1,73 +1,60 @@
-pipeline {
-    agent any
-
-    options {
-        gitLabConnection('YADRO MULTI')
-    }
-
-    stages {
+node {
+    def conditions = conditionalStage()
+    
+    def shouldRunCheckout = conditions.isCheckout
+    def shouldRunLint = conditions.isLint
+    def shouldRunSAST = conditions.isSAST
+    def shouldRunBuild = conditions.isBuild
+    def shouldRunPush = conditions.isPush
+    def shouldRunDeployStaging = conditions.isDeployStaging
+    def shouldRunSmokeTest = conditions.isSmokeTest
+    def shouldRunDeployProduction = conditions.isDeployProduction
+    
+    if (shouldRunCheckout) {
         stage('Checkout') {
-            steps {
-                echo 'Checkout stage'
-                script {
-                    // Получаем карту условий один раз
-                    def conditions = conditionalStage()
-                    
-                    if (conditions.isMain) {
-                        echo "a.sheynova/hw5 is success"
-                    }
-                    
-                    // Сохраняем условия для использования в других stage
-                    env.SHOULD_PUSH = conditions.shouldPush.toString()
-                    env.SHOULD_STAGING = conditions.shouldStaging.toString()
-                    env.SHOULD_PRODUCTION = conditions.shouldProduction.toString()
-                }
-            }
+            echo 'Checkout stage'
         }
-        
+    }
+    
+    if (shouldRunLint) {
         stage('Lint') {
-            steps { 
-                echo 'Lint stage' 
-            }
+            echo 'Lint stage'
         }
-        
+    }
+    
+    if (shouldRunSAST) {
         stage('SAST') {
-            steps { 
-                echo 'SAST stage' 
-            }
+            echo 'SAST stage'
         }
-        
+    }
+    
+    if (shouldRunBuild) {
         stage('Build') {
-            steps { 
-                echo 'Build stage' 
-            }
+            echo 'Build stage'
         }
-        
+    }
+    
+    if (shouldRunPush) {
         stage('Push') {
-            when {
-                expression { env.SHOULD_PUSH == 'true' }
-            }
-            steps { 
-                echo 'Push stage' 
-            }
+            echo 'Push stage'
         }
-        
-        stage('Deploy') {
-            when {
-                expression { env.SHOULD_STAGING == 'true' }
-            }
-            steps { 
-                echo 'Deploy stage to Staging' 
-            }
+    }
+    
+    if (shouldRunDeployStaging) {
+        stage('Deploy Staging') {
+            echo 'Deploy stage to Staging'
         }
-        
+    }
+    
+    if (shouldRunSmokeTest) {
         stage('Smoke Test') {
-            when {
-                expression { env.SHOULD_PRODUCTION == 'true' }
-            }
-            steps { 
-                echo 'Smoke Test stage for Production' 
-            }
+            echo 'Smoke Test stage'
+        }
+    }
+    
+    if (shouldRunDeployProduction) {
+        stage('Deploy Production') {
+            echo 'Deploy stage to Production'
         }
     }
 }
