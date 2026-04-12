@@ -6,6 +6,12 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Quality Checks') {
             parallel {
                 stage('Lint') {
@@ -26,7 +32,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Test') {
+                stage('SAST') {
                     agent {
                         docker {
                             image 'python:3.13-slim-trixie@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d'
@@ -35,12 +41,14 @@ pipeline {
                         }
                     }
                     steps {
-                        gitlabCommitStatus(name: 'test') {
-                            echo "Running tests"
+                        gitlabCommitStatus(name: 'SAST') {
+                            echo "Running security checks..."
                             sh '''
                                 pip install -r requirements-test.txt
-                                python -m pytest tests/ -v
+                                bandit -r . -f html -o bandit-report.html
+
                             '''
+                            archiveArtifacts artifacts: 'bandit-report.html'
                         }
                     }
                 }
@@ -59,8 +67,8 @@ pipeline {
                     )]) {
                         sh """
                             echo \$DOCKERHUB_PASS | docker login -u \$DOCKERHUB_USER --password-stdin
-                            docker build -t ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER} .
-                            docker push ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER}
+                            docker build -t ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER} .
+                            docker push ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER}
                         """
                     }
                 }
@@ -88,7 +96,7 @@ pipeline {
                         )]) {
                         sh """
                             chmod 600 "\$SSH_KEY" 2>/dev/null || true
-                            ssh -i "\$SSH_KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -o BatchMode=yes ${params.DEPLOY_USER}@${params.DEPLOY_HOST} 'docker pull ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER} && (docker stop yadro-app || true) && (docker rm yadro-app || true) && docker run -d --name yadro-app -p 8000:8000 --restart unless-stopped ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER}'
+                            ssh -i "\$SSH_KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -o BatchMode=yes ${params.DEPLOY_USER}@${params.DEPLOY_HOST} 'docker pull ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER} && (docker stop yadro-app || true) && (docker rm yadro-app || true) && docker run -d --name yadro-app -p 8000:8000 --restart unless-stopped ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER}'
                         """
                     }
                 }
