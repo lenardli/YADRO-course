@@ -1,7 +1,8 @@
 node {
     def conditions = conditionalStage()
     
-    def shouldRunCheckout = conditions.isCheckout
+    // def shouldRunCheckout = conditions.isCheckout
+    def shouldRunCheckout = true
     def shouldRunLint = conditions.isLint
     def shouldRunSAST = conditions.isSAST
     def shouldRunBuild = conditions.isBuild
