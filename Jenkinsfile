@@ -1,21 +1,32 @@
 pipeline {
     agent any
 
-    triggers {
-        gitlab(triggerOnPush: true, triggerOnMergeRequest: false)
-    }
-    
-    // 2. Добавляем опции для получения информации о push
     options {
-        gitLabConnection('YADRO MULTI') // имя подключения из настроек Jenkins
+        gitLabConnection('YADRO MULTI')
     }
-    
-    stages {
-        stage('Hello') {
-            steps {
-                conditionalStage('Ana')
-            }
+
+    stage('Checkout') {
+        steps { echo 'Checkout stage' }
+        if (conditionalStage.isMain()) {
+            echo "a.sheynova/hw5 is success"
         }
     }
-    
+    stage('Lint') {
+        steps { echo 'Lint stage' }
+    }
+    stage('SAST') {
+        steps { echo 'SAST stage' }
+    }
+    stage('Build') {
+        steps { echo 'Build stage' }
+    }
+    stage('Push') {
+        steps { echo 'Push stage' }
+    }
+    stage('Deploy') {
+        steps { echo 'Deploy stage' }
+    }
+    stage('Smoke Test') {
+        steps { echo 'Smoke Test stage' }
+    }
 }
