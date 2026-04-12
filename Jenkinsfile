@@ -11,7 +11,7 @@ pipeline {
                 echo 'Checkout stage'
                 script {
                     // Получаем карту условий один раз
-                    def conditions = buildConditions()
+                    def conditions = conditionalStage()
                     
                     if (conditions.isMain) {
                         echo "a.sheynova/hw5 is success"
