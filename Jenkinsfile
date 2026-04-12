@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Hello') {
             steps {
-                sayHello('Anna')
+                conditionalStage('Anna')
             }
         }
     }
