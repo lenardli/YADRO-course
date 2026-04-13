@@ -1,15 +1,13 @@
+properties([
+    pipelineTriggers([
+        gitlab(triggerOnPush: true),
+    ])
+])
 node {
-    Boolean isTag = env.TAG_NAME != null
-    Boolean isMR = env.CHANGE_ID != null
-    Boolean isMain = env.BRANCH_NAME == 'main'
-
-    Boolean shouldBuild = isMain || isMR || isTag
-    Boolean shouldPush = isMain || isTag
-    Boolean shouldStaging = isMain
-    Boolean shouldProduction = isTag
-
     def imageTag
     def imageName
+
+    
 
     try {
         stage('Checkout') {
@@ -57,24 +55,24 @@ node {
         }
 
 
-        // conditionalStage(name: 'Build', condition: shouldBuild) {
+        // conditionalStage(name: 'Build', condition: conditionalStage.shouldBuild) {
         //     echo "Building ${imageName}... [STUB]"
         //     sleep 4
         // }
 
-        // conditionalStage(name: 'Push', condition: shouldPush) {
+        // conditionalStage(name: 'Push', condition: conditionalStage.shouldPush) {
         //     echo "Pushing ${imageName} to registry... [STUB]"
         //     sleep 3
         // }
 
-        // conditionalStage(name: 'Deploy staging', condition: shouldStaging) {
+        // conditionalStage(name: 'Deploy staging', condition: conditionalStage.shouldStaging) {
         //     build job: 'deploy-fake-app', parameters: [
         //         string(name: 'IMAGE_TAG', value: imageTag),
         //         string(name: 'ENVIRONMENT', value: 'staging')
         //     ]
         // }
 
-        // conditionalStage(name: 'Deploy production', condition: shouldProduction) {
+        // conditionalStage(name: 'Deploy production', condition: conditionalStage.shouldProduction) {
         //     build job: 'deploy-fake-app', parameters: [
         //         string(name: 'IMAGE_TAG', value: imageTag),
         //         string(name: 'ENVIRONMENT', value: 'production')
