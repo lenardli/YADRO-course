@@ -3,10 +3,10 @@ def REGISTRY = "dans-fake-app"
 pipeline {
     agent none
 
-    // parameters {
-    //     string(name: 'IMAGE_TAG', description: 'Image tag to deploy')
-    //     choice(name: 'ENVIRONMENT', choices: ['staging', 'production'], description: 'Target environment')
-    // }
+    parameters {
+        string(name: 'IMAGE_TAG', description: 'Image tag to deploy')
+        choice(name: 'ENVIRONMENT', choices: ['staging', 'production'], description: 'Target environment')
+    }
 
     stages {
         stage('Deploy') {
