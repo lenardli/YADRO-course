@@ -1,0 +1,39 @@
+def REGISTRY = "dans-fake-app"
+
+pipeline {
+    agent none
+
+    // parameters {
+    //     string(name: 'IMAGE_TAG', description: 'Image tag to deploy')
+    //     choice(name: 'ENVIRONMENT', choices: ['staging', 'production'], description: 'Target environment')
+    // }
+
+    stages {
+        stage('Deploy') {
+            agent { label params.ENVIRONMENT }
+            steps {
+                echo "Pulling ${REGISTRY}:${params.IMAGE_TAG} on ${params.ENVIRONMENT}... [STUB]"
+                sleep 2
+                echo "docker run -d -p 8000:8000 ${REGISTRY}:${params.IMAGE_TAG} [STUB]"
+                sleep 3
+            }
+        }
+
+        stage('Smoke test') {
+            agent { label params.ENVIRONMENT }
+            steps {
+                echo "curl -f http://localhost:8000/info"
+                sleep 2
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Deploy job finished - ${params.ENVIRONMENT}:${params.IMAGE_TAG} - ${currentBuild.result}"
+        }
+        failure {
+            echo "Deployment failed for ${params.ENVIRONMENT}:${params.IMAGE_TAG}"
+        }
+    }
+}

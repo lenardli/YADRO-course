@@ -1,61 +1,92 @@
 node {
-    def conditions = conditionalStage()
-    
-    // def shouldRunCheckout = conditions.isCheckout
-    def shouldRunCheckout = true
-    def shouldRunLint = conditions.isLint
-    def shouldRunSAST = conditions.isSAST
-    def shouldRunBuild = conditions.isBuild
-    def shouldRunPush = conditions.isPush
-    def shouldRunDeployStaging = conditions.isDeployStaging
-    def shouldRunSmokeTest = conditions.isSmokeTest
-    def shouldRunDeployProduction = conditions.isDeployProduction
-    
-    if (shouldRunCheckout) {
+    Boolean isTag = env.TAG_NAME != null
+    Boolean isMR = env.CHANGE_ID != null
+    Boolean isMain = env.BRANCH_NAME == 'main'
+
+    Boolean shouldBuild = isMain || isMR || isTag
+    Boolean shouldPush = isMain || isTag
+    Boolean shouldStaging = isMain
+    Boolean shouldProduction = isTag
+
+    def imageTag
+    def imageName
+
+    try {
         stage('Checkout') {
-            echo 'Checkout stage'
+            checkout scm
+            imageTag = env.TAG_NAME ?: sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            imageName = "dans-fake-app:${imageTag}"
+            sleep 2
         }
-    }
-    
-    if (shouldRunLint) {
-        stage('Lint') {
-            echo 'Lint stage'
+
+        stage('Checks') {
+            parallel(
+                lint: {
+                    echo "Running linter... [STUB]"
+                    sleep 3
+                },
+                sast: {
+                    echo "Running bandit/gosec... [STUB]"
+                    sleep 4
+                    archiveArtifacts artifacts: 'sast-report.json', allowEmptyArchive: true
+                }
+            )
         }
-    }
-    
-    if (shouldRunSAST) {
-        stage('SAST') {
-            echo 'SAST stage'
+        stage(name: 'Build') {
+            echo "Building ${imageName}... [STUB]"
+            sleep 4
         }
-    }
-    
-    if (shouldRunBuild) {
-        stage('Build') {
-            echo 'Build stage'
+
+        stage(name: 'Push') {
+            echo "Pushing ${imageName} to registry... [STUB]"
+            sleep 3
         }
-    }
-    
-    if (shouldRunPush) {
-        stage('Push') {
-            echo 'Push stage'
+
+        stage(name: 'Deploy staging') {
+            build job: 'YADRO', parameters: [
+                string(name: 'IMAGE_TAG', value: imageTag),
+                string(name: 'ENVIRONMENT', value: 'staging')
+            ]
         }
-    }
-    
-    if (shouldRunDeployStaging) {
-        stage('Deploy Staging') {
-            echo 'Deploy stage to Staging'
+
+        stage(name: 'Deploy production') {
+            build job: 'YADRO', parameters: [
+                string(name: 'IMAGE_TAG', value: imageTag),
+                string(name: 'ENVIRONMENT', value: 'production')
+            ]
         }
-    }
-    
-    if (shouldRunSmokeTest) {
-        stage('Smoke Test') {
-            echo 'Smoke Test stage'
-        }
-    }
-    
-    if (shouldRunDeployProduction) {
-        stage('Deploy Production') {
-            echo 'Deploy stage to Production'
-        }
+
+
+        // conditionalStage(name: 'Build', condition: shouldBuild) {
+        //     echo "Building ${imageName}... [STUB]"
+        //     sleep 4
+        // }
+
+        // conditionalStage(name: 'Push', condition: shouldPush) {
+        //     echo "Pushing ${imageName} to registry... [STUB]"
+        //     sleep 3
+        // }
+
+        // conditionalStage(name: 'Deploy staging', condition: shouldStaging) {
+        //     build job: 'deploy-fake-app', parameters: [
+        //         string(name: 'IMAGE_TAG', value: imageTag),
+        //         string(name: 'ENVIRONMENT', value: 'staging')
+        //     ]
+        // }
+
+        // conditionalStage(name: 'Deploy production', condition: shouldProduction) {
+        //     build job: 'deploy-fake-app', parameters: [
+        //         string(name: 'IMAGE_TAG', value: imageTag),
+        //         string(name: 'ENVIRONMENT', value: 'production')
+        //     ]
+        // }
+
+    } catch (Exception e) {
+        currentBuild.result = 'FAILURE'
+        throw e
+
+    } finally {
+        echo "Cleanup... [STUB]"
+        sleep 2
     }
 }
