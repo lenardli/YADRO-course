@@ -4,6 +4,15 @@ properties([
     ])
 ])
 node {
+    Boolean IsTag = env.TAG_NAME != null
+    Boolean IsMR = env.CHANGE_ID != null
+    Boolean IsMain = env.BRANCH_NAME == 'a.sheynova/main'
+
+    Boolean shouldBuild = IsMain || IsMR || IsTag
+    Boolean shouldPush = IsMain || IsTag
+    Boolean shouldStaging = IsMain
+    Boolean shouldProduction = IsTag
+
     def imageTag
     def imageName
 
@@ -17,59 +26,51 @@ node {
         stage('Checks') {
             parallel(
                 lint: {
-                    echo "Running linter... [STUB]"
-                    sleep 3
+                    echo "Linting code"
+                    def dockerImage = docker.image('python:3.13-slim-trixie@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d')
+                    dockerImage.inside(
+                    "-e HOME=${env.WORKSPACE} -e PATH=${env.WORKSPACE}/.local/bin:$PATH"
+                    ) {
+                    sh '''
+                        pip install flake8==7.3.0
+                        flake8 . --exclude=venv,.env,__pycache__,.local --max-line-length=90
+                    '''
+                    }
                 },
                 sast: {
-                    echo "Running bandit/gosec... [STUB]"
-                    sleep 4
+                    echo "SAST checking"
+                    def dockerImage = docker.image('python:3.13-slim-trixie@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d')
+                    dockerImage.inside(
+                    "-e HOME=${env.WORKSPACE} -e PATH=${env.WORKSPACE}/.local/bin:$PATH"
+                    ) {
+                    sh '''
+                        pip install bandit==1.9.4
+                        bandit -r .  --severity-level=high -f json -o sast-report.json
+                    '''
                     archiveArtifacts artifacts: 'sast-report.json', allowEmptyArchive: true
+                    }
                 }
             )
         }
-        // stage(name: 'Build') {
-        //     echo "Building ${imageName}... [STUB]"
-        //     sleep 4
-        // }
 
-        // stage(name: 'Push') {
-        //     echo "Pushing ${imageName} to registry... [STUB]"
-        //     sleep 3
-        // }
-
-        // stage(name: 'Deploy staging') {
-        //     build job: 'YADRO', parameters: [
-        //         string(name: 'IMAGE_TAG', value: imageTag),
-        //         string(name: 'ENVIRONMENT', value: 'staging')
-        //     ]
-        // }
-
-        // stage(name: 'Deploy production') {
-        //     build job: 'YADRO', parameters: [
-        //         string(name: 'IMAGE_TAG', value: imageTag),
-        //         string(name: 'ENVIRONMENT', value: 'production')
-        //     ]
-        // }
-
-
-        conditionalStage(name: 'Build', condition: conditionalStage.shouldBuild) {
+        conditionalStage(name: 'Build', condition: shouldBuild) {
             echo "Building ${imageName}... [STUB]"
             sleep 4
         }
 
-        conditionalStage(name: 'Push', condition: conditionalStage.shouldPush) {
+        conditionalStage(name: 'Push', condition: shouldPush) {
             echo "Pushing ${imageName} to registry... [STUB]"
             sleep 3
         }
 
-        conditionalStage(name: 'Deploy staging', condition: conditionalStage.shouldStaging) {
+        conditionalStage(name: 'Deploy staging', condition: shouldStaging) {
             build job: 'deploy-fake-app', parameters: [
                 string(name: 'IMAGE_TAG', value: imageTag),
                 string(name: 'ENVIRONMENT', value: 'staging')
             ]
         }
 
-        conditionalStage(name: 'Deploy production', condition: conditionalStage.shouldProduction) {
+        conditionalStage(name: 'Deploy production', condition: shouldProduction) {
             build job: 'deploy-fake-app', parameters: [
                 string(name: 'IMAGE_TAG', value: imageTag),
                 string(name: 'ENVIRONMENT', value: 'production')
