@@ -20,7 +20,7 @@ node {
         stage('Checkout') {
             checkout scm
             imageTag = env.TAG_NAME ?: sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-            imageName = "${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${imageTag}"
+            imageName = "${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${imageTag}"
         }
 
         stage('Checks') {
@@ -45,7 +45,7 @@ node {
                     ) {
                     sh '''
                         pip install bandit==1.9.4
-                        bandit -r .  --severity-level=high -f json -o sast-report.json
+                        bandit -r .  --severity-level=high --exclude=./.local -f json -o sast-report.json
                     '''
                     archiveArtifacts artifacts: 'sast-report.json', allowEmptyArchive: true
                     }
@@ -54,14 +54,25 @@ node {
         }
 
         conditionalStage(name: 'Build', condition: shouldBuild) {
-            echo "Building ${imageName}... [STUB]"
-            sleep 4
+            echo "Building ${imageName}"
+            sh """
+                docker build -t ${imageName} .
+            """
         }
 
         conditionalStage(name: 'Push', condition: shouldPush) {
-            echo "Pushing ${imageName} to registry... [STUB]"
-            sleep 3
-        }
+            echo "Pushing ${imageName} to Docker Hub"
+            withCredentials([usernamePassword(
+                credentialsId: 'docker-hub',
+                usernameVariable: 'DOCKERHUB_USER',
+                passwordVariable: 'DOCKERHUB_PASS'
+            )]) {
+                sh """
+                    echo \$DOCKERHUB_PASS | docker login -u \$DOCKERHUB_USER --password-stdin
+                    docker push ${imageName}
+                """
+                }
+            }
 
         conditionalStage(name: 'Deploy staging', condition: shouldStaging) {
             build job: 'deploy-fake-app', parameters: [
@@ -82,7 +93,6 @@ node {
         throw e
 
     } finally {
-        echo "Cleanup... [STUB]"
-        sleep 2
+        sh "docker logout"
     }
 }
