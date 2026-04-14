@@ -1,5 +1,3 @@
-def REGISTRY = "dans-fake-app"
-
 pipeline {
     agent none
 
@@ -12,18 +10,24 @@ pipeline {
         stage('Deploy') {
             agent { label params.ENVIRONMENT }
             steps {
-                echo "Pulling ${REGISTRY}:${params.IMAGE_TAG} on ${params.ENVIRONMENT}... [STUB]"
-                sleep 2
-                echo "docker run -d -p 8000:8000 ${REGISTRY}:${params.IMAGE_TAG} [STUB]"
-                sleep 3
+                echo "Pulling ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${params.IMAGE_TAG} on ${params.ENVIRONMENT}"
+                sh """
+                    docker pull ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${params.IMAGE_TAG}
+                    docker stop yadro-app || true
+                    docker rm yadro-app || true
+                    docker run -d --name yadro-app -p 8000:8000 --restart unless-stopped ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${params.IMAGE_TAG}
+                """           
             }
         }
 
         stage('Smoke test') {
             agent { label params.ENVIRONMENT }
             steps {
-                echo "curl -f http://localhost:8000/info"
-                sleep 2
+                sh '''
+                        for i in 1 2 3 4 5; do
+                            curl -f http://localhost:8000/info && break || sleep 5
+                        done
+                '''
             }
         }
     }

@@ -20,7 +20,7 @@ node {
         stage('Checkout') {
             checkout scm
             imageTag = env.TAG_NAME ?: sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-            imageName = "${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${imageTag}"
+            imageName = "${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${imageTag}"
         }
 
         stage('Checks') {
@@ -53,14 +53,14 @@ node {
             )
         }
 
-        conditionalStage(name: 'Build', condition: shouldBuild) {
+        conditionalStage(name: 'Build', condition: sh) {
             echo "Building ${imageName}"
             sh """
                 docker build -t ${imageName} .
             """
         }
 
-        conditionalStage(name: 'Push', condition: shouldPush) {
+        conditionalStage(name: 'Push', condition: true) {
             echo "Pushing ${imageName} to Docker Hub"
             withCredentials([usernamePassword(
                 credentialsId: 'docker-hub',
@@ -74,15 +74,15 @@ node {
                 }
             }
 
-        conditionalStage(name: 'Deploy staging', condition: shouldStaging) {
-            build job: 'deploy-fake-app', parameters: [
+        conditionalStage(name: 'Deploy staging', condition: true) {
+            build job: 'YADRO', parameters: [
                 string(name: 'IMAGE_TAG', value: imageTag),
                 string(name: 'ENVIRONMENT', value: 'staging')
             ]
         }
 
-        conditionalStage(name: 'Deploy production', condition: shouldProduction) {
-            build job: 'deploy-fake-app', parameters: [
+        conditionalStage(name: 'Deploy production', condition: true) {
+            build job: 'YADRO', parameters: [
                 string(name: 'IMAGE_TAG', value: imageTag),
                 string(name: 'ENVIRONMENT', value: 'production')
             ]
