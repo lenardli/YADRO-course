@@ -1,9 +1,15 @@
 properties([
     pipelineTriggers([
-        gitlab(triggerOnPush: true),
+        gitlab(triggerOnPush: true)
+    ]),
+    parameters([
+        choice(name: 'NODE', 
+               choices: ['master', 'worker-1', 'worker-2'], 
+               description: 'Available nodes')
     ])
 ])
-node {
+
+node(params.NODE) {
     Boolean IsTag = env.TAG_NAME != null
     Boolean IsMR = env.CHANGE_ID != null
     Boolean IsMain = env.BRANCH_NAME == 'a.sheynova/main'
