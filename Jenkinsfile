@@ -1,127 +1,104 @@
-pipeline {
-    agent any
+properties([
+    pipelineTriggers([
+        gitlab(triggerOnPush: true)
+    ]),
+    parameters([
+        choice(name: 'NODE', 
+               choices: ['master', 'worker-1', 'worker-2'], 
+               description: 'Available nodes')
+    ])
+])
 
-    options {
-        gitLabConnection('YADRO')
-    }
+node(params.NODE) {
+    Boolean IsTag = env.TAG_NAME != null
+    Boolean IsMR = env.CHANGE_ID != null
+    Boolean IsMain = env.BRANCH_NAME == 'a.sheynova/main'
 
-    stages {
-        stage('Quality Checks') {
-            parallel {
-                stage('Lint') {
-                    agent {
-                        docker {
-                            image 'python:3.13-slim-trixie@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d'
-                            args "-e HOME=${env.WORKSPACE} -e PATH=/var/lib/jenkins/workspace/YADRO@2/.local/bin:$PATH"
-                            reuseNode true
-                        }
-                    }
-                    steps {
-                        gitlabCommitStatus(name: 'lint') {
-                            echo "Linting code"
-                            sh '''
-                                pip install flake8==7.3.0
-                                flake8 . --exclude=venv,.env,__pycache__,.local --max-line-length=90
-                            '''
-                        }
-                    }
-                }
-                stage('Test') {
-                    agent {
-                        docker {
-                            image 'python:3.13-slim-trixie@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d'
-                            args "-e HOME=${env.WORKSPACE} -e PATH=/var/lib/jenkins/workspace/YADRO@2/.local/bin:$PATH"
-                            reuseNode true
-                        }
-                    }
-                    steps {
-                        gitlabCommitStatus(name: 'test') {
-                            echo "Running tests"
-                            sh '''
-                                pip install -r requirements-test.txt
-                                python -m pytest tests/ -v
-                            '''
-                        }
-                    }
-                }
-            }
-            failFast true
+    Boolean shouldBuild = IsMain || IsMR || IsTag
+    Boolean shouldPush = IsMain || IsTag
+    Boolean shouldStaging = IsMain
+    Boolean shouldProduction = IsTag
+
+    def imageTag
+    def imageName
+
+    try {
+        stage('Checkout') {
+            checkout scm
+            imageTag = env.TAG_NAME ?: sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            imageName = "${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${imageTag}"
         }
 
-        stage('Build') {
-            steps {
-                gitlabCommitStatus(name: 'build') {
-                    echo 'Building and pushing Docker image to Docker Hub'
-                    withCredentials([usernamePassword(
-                        credentialsId: 'docker-hub',
-                        usernameVariable: 'DOCKERHUB_USER',
-                        passwordVariable: 'DOCKERHUB_PASS'
-                    )]) {
-                        sh """
-                            echo \$DOCKERHUB_PASS | docker login -u \$DOCKERHUB_USER --password-stdin
-                            docker build -t ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER} .
-                            docker push ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER}
-                        """
+        stage('Checks') {
+            parallel(
+                lint: {
+                    echo "Linting code"
+                    def dockerImage = docker.image('python:3.13-slim-trixie@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d')
+                    dockerImage.inside(
+                    "-e HOME=${env.WORKSPACE} -e PATH=${env.WORKSPACE}/.local/bin:$PATH"
+                    ) {
+                    sh '''
+                        pip install flake8==7.3.0
+                        flake8 . --exclude=venv,.env,__pycache__,.local --max-line-length=90
+                    '''
+                    }
+                },
+                sast: {
+                    echo "SAST checking"
+                    def dockerImage = docker.image('python:3.13-slim-trixie@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d')
+                    dockerImage.inside(
+                    "-e HOME=${env.WORKSPACE} -e PATH=${env.WORKSPACE}/.local/bin:$PATH"
+                    ) {
+                    sh '''
+                        pip install bandit==1.9.4
+                        bandit -r .  --severity-level=high --exclude=./.local -f json -o sast-report.json
+                    '''
+                    archiveArtifacts artifacts: 'sast-report.json', allowEmptyArchive: true
                     }
                 }
-            }
-            post {
-                always {
-                    sh "docker logout"
-                }
-            }   
+            )
         }
 
-        stage('Deploy') {
-            when {
-                allOf {
-                    expression { env.GIT_BRANCH == 'origin/a.sheynova/main' }
-                    expression { currentBuild.buildCauses.toString().contains('UserIdCause') }
+        conditionalStage(name: 'Build', condition: shouldBuild) {
+            echo "Building ${imageName}"
+            sh """
+                docker build -t ${imageName} .
+            """
+        }
+
+        conditionalStage(name: 'Push', condition: shouldPush) {
+            echo "Pushing ${imageName} to Docker Hub"
+            withCredentials([usernamePassword(
+                credentialsId: 'docker-hub',
+                usernameVariable: 'DOCKERHUB_USER',
+                passwordVariable: 'DOCKERHUB_PASS'
+            )]) {
+                sh """
+                    echo \$DOCKERHUB_PASS | docker login -u \$DOCKERHUB_USER --password-stdin
+                    docker push ${imageName}
+                """
                 }
             }
-            steps {
-                gitlabCommitStatus(name: 'deploy') {
-                    echo "Deploy to host ${params.DEPLOY_USER}@${params.DEPLOY_HOST}"
-                    withCredentials([sshUserPrivateKey(
-                            credentialsId: 'deploy-ssh',
-                            keyFileVariable: 'SSH_KEY'
-                        )]) {
-                        sh """
-                            chmod 600 "\$SSH_KEY" 2>/dev/null || true
-                            ssh -i "\$SSH_KEY" -o StrictHostKeyChecking=accept-new -o IdentitiesOnly=yes -o BatchMode=yes ${params.DEPLOY_USER}@${params.DEPLOY_HOST} 'docker pull ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER} && (docker stop yadro-app || true) && (docker rm yadro-app || true) && docker run -d --name yadro-app -p 8000:8000 --restart unless-stopped ${env.DOСKER_NAMESPACE}/${env.DOCKER_REPO}:${env.BUILD_NUMBER}'
-                        """
-                    }
-                }
-            }
-            post {
-                failure {
-                    updateGitlabCommitStatus name: 'deploy', state: 'failed'
-                }
-                aborted {
-                    updateGitlabCommitStatus name: 'deploy', state: 'canceled'
-                }
-            }
+
+        conditionalStage(name: 'Deploy staging', condition: shouldStaging) {
+            build job: 'YADRO', parameters: [
+                string(name: 'IMAGE_TAG', value: imageTag),
+                string(name: 'ENVIRONMENT', value: 'staging')
+            ]
         }
-    }
-    post {
-        always {
-            script {
-                def state = [
-                    'SUCCESS' : 'success',
-                    'FAILURE' : 'failed',
-                    'ABORTED' : 'canceled'
-                ][currentBuild.currentResult] ?: 'failed'
-                updateGitlabCommitStatus name: 'pipeline', state: state
-            }
+
+        conditionalStage(name: 'Deploy production', condition: shouldProduction) {
+            build job: 'YADRO', parameters: [
+                string(name: 'IMAGE_TAG', value: imageTag),
+                string(name: 'ENVIRONMENT', value: 'production')
+            ]
         }
-        failure {
-            echo "Pipeline failed!"
-        }
-        success {
-            echo "Pipeline succeeded!"
-        }
-        aborted {
-            echo "Pipeline was aborted!"
-        }
+
+    } catch (Exception e) {
+        currentBuild.result = 'FAILURE'
+        throw e
+
+    } finally {
+        sh "docker logout"
     }
 }

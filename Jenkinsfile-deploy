@@ -1,0 +1,43 @@
+pipeline {
+    agent none
+
+    parameters {
+        string(name: 'IMAGE_TAG', description: 'Image tag to deploy')
+        choice(name: 'ENVIRONMENT', choices: ['staging', 'production'], description: 'Target environment')
+    }
+
+    stages {
+        stage('Deploy') {
+            agent { label params.ENVIRONMENT }
+            steps {
+                echo "Pulling ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${params.IMAGE_TAG} on ${params.ENVIRONMENT}"
+                sh """
+                    docker pull ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${params.IMAGE_TAG}
+                    docker stop yadro-app || true
+                    docker rm yadro-app || true
+                    docker run -d --name yadro-app -p 8000:8000 --restart unless-stopped ${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${params.IMAGE_TAG}
+                """           
+            }
+        }
+
+        stage('Smoke test') {
+            agent { label params.ENVIRONMENT }
+            steps {
+                sh '''
+                        for i in 1 2 3 4 5; do
+                            curl -f http://localhost:8000/info && break || sleep 5
+                        done
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Deploy job finished - ${params.ENVIRONMENT}:${params.IMAGE_TAG} - ${currentBuild.result}"
+        }
+        failure {
+            echo "Deployment failed for ${params.ENVIRONMENT}:${params.IMAGE_TAG}"
+        }
+    }
+}

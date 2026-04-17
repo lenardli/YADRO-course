@@ -15,3 +15,10 @@ prometheus-client==0.21.1
 httpx==0.28.1
 pytest==8.4.2
 
+bandit==1.9.4
+markdown-it-py==4.0.0
+mdurl==0.1.2
+Pygments==2.20.0
+PyYAML==6.0.3
+rich==14.3.4
+stevedore==5.7.0
