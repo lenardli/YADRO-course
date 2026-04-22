@@ -1,6 +1,6 @@
-# Ansible-проект `k8s-node-bootstrap`
+# `k8s-node-bootstrap`
 
-Проект автоматизирует базовую подготовку Kubernetes-узлов (control-plane и worker) с помощью ролей коллекции `app.k8s_bootstrap`.
+Автоматизация базовой  подготовк Kubernetes-узлов (control-plane и worker) с помощью ролей коллекции `app.k8s_bootstrap`.
 
 В рамках bootstrap выполняются роли:
 
