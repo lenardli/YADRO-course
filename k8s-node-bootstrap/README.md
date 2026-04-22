@@ -1,6 +1,6 @@
 # `k8s-node-bootstrap`
 
-Автоматизация базовой  подготовк Kubernetes-узлов (control-plane и worker) с помощью ролей коллекции `app.k8s_bootstrap`.
+Автоматизация базовой  подготовки Kubernetes-узлов (control-plane и worker) с помощью ролей коллекции `app.k8s_bootstrap`.
 
 В рамках bootstrap выполняются роли:
 
