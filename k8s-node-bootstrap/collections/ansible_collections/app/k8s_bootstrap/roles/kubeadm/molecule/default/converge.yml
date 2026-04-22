@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include kubeadm"
+      include_role:
+        name: "kubeadm"

@@ -1,0 +1,9 @@
+---
+argument_specs:
+  main:
+    short_description: Install kubelet from pkgs.k8s.io and disable swap for Kubernetes.
+    options:
+      kubernetes_version:
+        type: str
+        description: Kubernetes apt repo channel under pkgs.k8s.io core/stable (e.g. v1.35).
+        default: "v1.35"

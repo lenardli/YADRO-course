@@ -1,0 +1,37 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check if CRI-O service is running
+      ansible.builtin.systemd:
+        name: crio
+        state: started
+      register: crio_status
+
+    - name: Assert CRI-O is running
+      ansible.builtin.assert:
+        that:
+          - crio_status.status.ActiveState == "active"
+
+    - name: Get CRI-O version
+      ansible.builtin.command:
+        cmd: crio --version
+      register: crio_version_output
+      changed_when: false
+
+    - name: Extract version number
+      ansible.builtin.set_fact:
+        crio_version: "{{ crio_version_output.stdout | regex_search('(\\d+\\.\\d+\\.\\d+)') }}"
+
+    - name: Assert CRI-O version is 1.32 or higher
+      ansible.builtin.assert:
+        that:
+          - crio_version is defined
+          - crio_version is version('1.32', '>=')
+        fail_msg: "CRI-O version {{ crio_version }} is less than 1.32"
+        success_msg: "CRI-O version {{ crio_version }} meets requirement (>= 1.32)"
+
+    - name: Display CRI-O version
+      ansible.builtin.debug:
+        msg: "CRI-O version: {{ crio_version_output.stdout }}"

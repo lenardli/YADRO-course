@@ -1,0 +1,50 @@
+---
+- name: Install prerequisites
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+  become: true
+
+- name: Add Kubernetes GPG key
+  shell: |
+    curl -fsSL https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/Release.key | \
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+  become: true
+  args:
+    creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+- name: Add Kubernetes repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/ /"
+    state: present
+    filename: kubernetes.list
+    update_cache: true
+  become: true
+
+- name: Install kubeadm
+  apt:
+    name: kubeadm
+    state: present
+  become: true
+  register: kubeadm_install
+  until: kubeadm_install is success
+  retries: 3
+  delay: 10
+
+- name: Hold kubeadm package
+  dpkg_selections:
+    name: kubeadm
+    selection: hold
+  become: true

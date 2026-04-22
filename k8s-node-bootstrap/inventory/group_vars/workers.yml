@@ -1,0 +1,4 @@
+ansible_user: "worker"
+ansible_become: true
+ansible_become_method: sudo
+ansible_become_password: "{{ vault_become_password_workers }}"

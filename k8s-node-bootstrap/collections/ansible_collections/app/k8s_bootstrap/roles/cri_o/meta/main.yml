@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: "a.sheynova"
+  description: "Ansible role to install CRI-O 1.32 container runtime on Ubuntu 24.04"
+  license: "MIT"
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+  galaxy_tags:
+    - crio
+    - cri-o
+    - container
+    - runtime
+
+dependencies: []

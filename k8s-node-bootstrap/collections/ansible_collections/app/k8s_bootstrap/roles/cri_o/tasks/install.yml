@@ -1,0 +1,50 @@
+---
+- name: Install required packages
+  apt:
+    name:
+      - curl
+      - gnupg
+    state: present
+    update_cache: yes
+
+- name: Create keyrings directory
+  file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: '0755'
+
+- name: Download and add CRI-O GPG key
+  shell: |
+    curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
+  args:
+    creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+
+- name: Add CRI-O APT repository
+  apt_repository:
+    repo: "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/ /"
+    state: present
+    filename: cri-o
+    update_cache: yes
+
+- name: Install CRI-O packages
+  apt:
+    name:
+      - cri-o
+    state: present
+    update_cache: yes
+  notify: restart crio
+
+
+- name: Enable CNI bridge plugin
+  command: "mv /etc/cni/net.d/10-crio-bridge.conflist.disabled /etc/cni/net.d/10-crio-bridge.conflist"
+  args:
+    removes: /etc/cni/net.d/10-crio-bridge.conflist.disabled
+    creates: /etc/cni/net.d/10-crio-bridge.conflist
+  notify: restart crio
+
+- name: Enable and start CRI-O service
+  systemd:
+    name: crio
+    enabled: yes
+    state: started
+    daemon_reload: yes
