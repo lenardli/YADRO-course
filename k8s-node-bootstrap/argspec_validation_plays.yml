@@ -1,0 +1,19 @@
+---
+- name: bootstrap_kubernetes_node
+  hosts: all
+  become: true
+  gather_facts: false
+  pre_tasks:
+    - name: Load vault variables explicitly
+      ansible.builtin.include_vars:
+        file: inventory/group_vars/all/vault.yml
+    - name: Verify with argspec
+      ansible.builtin.validate_argument_spec:
+        argument_spec: "{{ (lookup('ansible.builtin.file', filename) | from_yaml)['argument_specs'][ansible_play_name]['options'] }}"
+      vars:
+        filename: "argspec_validation_plays.meta.yml"
+  roles:
+    - role: app.k8s_bootstrap.cri_o
+    - role: app.k8s_bootstrap.kubelet
+    - role: app.k8s_bootstrap.kubeadm
+      when: inventory_hostname in groups['masters']

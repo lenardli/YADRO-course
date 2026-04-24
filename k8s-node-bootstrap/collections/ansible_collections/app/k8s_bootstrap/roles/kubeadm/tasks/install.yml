@@ -1,0 +1,61 @@
+---
+- name: Collect installed packages
+  ansible.builtin.package_facts:
+    manager: auto
+  become: true
+
+- name: Install kubeadm when absent
+  when: "'kubeadm' not in ansible_facts.packages"
+  block:
+    - name: Install prerequisites
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+        state: present
+        update_cache: true
+      become: true
+
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      become: true
+
+    - name: Download and add Kubernetes GPG key
+      ansible.builtin.get_url:
+        url: https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        mode: '0644'
+        owner: root
+        group: root
+      become: true
+      args:
+        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+    - name: Add Kubernetes APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/{{ kubernetes_version }}/deb/ /"
+        state: present
+        filename: kubernetes.list
+        update_cache: true
+      become: true
+
+    - name: Install kubeadm
+      ansible.builtin.apt:
+        name: kubeadm
+        state: present
+      become: true
+      register: kubeadm_install
+      until: kubeadm_install is success
+      retries: 3
+      delay: 10
+
+- name: Hold kubeadm package
+  ansible.builtin.dpkg_selections:
+    name: kubeadm
+    selection: hold
+  become: true

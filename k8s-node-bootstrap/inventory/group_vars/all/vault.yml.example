@@ -1,0 +1,2 @@
+vault_become_password_masters: "sudo_pass"
+vault_become_password_workers: "sudo_pass"
