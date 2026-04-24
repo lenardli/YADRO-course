@@ -118,3 +118,5 @@ cython_debug/
 .github/
 .vscode/
 **/.yamllint
+
+**/vault.yml
