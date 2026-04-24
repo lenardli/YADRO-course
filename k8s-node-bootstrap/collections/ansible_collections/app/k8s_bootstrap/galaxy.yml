@@ -1,0 +1,11 @@
+---
+
+namespace: "app"
+name: "k8s_bootstrap"
+readme: README.md
+version: 0.0.1
+authors:
+  - a.sheynova
+
+description: Collection for app.k8s_bootstrap playbook project
+tags: [kubernetes, kubelet, kubeadm, cri-o]

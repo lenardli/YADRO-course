@@ -1,0 +1,71 @@
+---
+- name: Collect installed packages
+  ansible.builtin.package_facts:
+    manager: auto
+  become: true
+
+- name: Install CRI-O when absent
+  when: "'cri-o' not in ansible_facts.packages"
+  block:
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - curl
+          - gnupg
+        state: present
+        update_cache: yes
+      become: true
+
+    - name: Download and add CRI-O GPG key
+      ansible.builtin.get_url:
+        url: https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/Release.key
+        dest: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+        mode: '0644'
+        owner: root
+        group: root
+      become: true
+      args:
+        creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
+
+    - name: Add CRI-O APT repository
+      ansible.builtin.apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/{{ crio_version }}/deb/ /"
+        state: present
+        filename: cri-o
+        update_cache: yes
+      become: true
+
+
+    - name: Install CRI-O packages
+      ansible.builtin.apt:
+        name:
+          - cri-o
+        state: present
+        update_cache: yes
+      become: true
+      notify: restart crio
+
+
+- name: Deploy CRI-O CNI bridge configuration
+  ansible.builtin.template:
+    src: 10-crio-bridge.conflist.j2
+    dest: /etc/cni/net.d/10-crio-bridge.conflist
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+  notify: restart crio
+
+- name: Remove vendor-disabled CNI bridge file if present
+  ansible.builtin.file:
+    path: /etc/cni/net.d/10-crio-bridge.conflist.disabled
+    state: absent
+  become: true
+
+- name: Enable and start CRI-O service
+  ansible.builtin.systemd:
+    name: crio
+    enabled: yes
+    state: started
+    daemon_reload: yes
+  become: true

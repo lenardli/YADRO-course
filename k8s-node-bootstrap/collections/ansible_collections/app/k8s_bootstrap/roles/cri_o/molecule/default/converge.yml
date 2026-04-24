@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include cri_o"
+      ansible.builtin.include_role:
+        name: "cri_o"
