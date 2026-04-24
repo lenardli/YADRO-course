@@ -21,3 +21,4 @@ trivy-report.json
 Jenkinsfile
 docker-compose*.yaml
 venv/
+k8s_bootstrap/

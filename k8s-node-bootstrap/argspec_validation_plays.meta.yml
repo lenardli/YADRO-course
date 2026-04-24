@@ -1,0 +1,27 @@
+---
+short_description: Argspec for validating Kubernetes bootstrap variables
+description: Validation schema for variables used to bootstrap Kubernetes nodes with CRI-O, kubelet, and kubeadm.
+argument_specs:
+  bootstrap_kubernetes_node:
+    short_description: Validate vars before running bootstrap roles
+    description:
+      - Validates play-level variables for the bootstrap playbook before executing roles.
+    author:
+      - a.sheynova
+    options:
+      crio_version:
+        description: Stable CRI-O channel tag used in OBS repository path (e.g. v1.32).
+        type: str
+        required: false
+        default: "v1.32"
+      kubernetes_version:
+        description: Kubernetes apt repository channel under pkgs.k8s.io core/stable (e.g. v1.35).
+        type: str
+        required: false
+        default: "v1.35"
+    examples: |
+      - import_playbook: argspec_validation_plays.yml
+        vars:
+          crio_version: "v1.32"
+          kubernetes_version: "v1.35"
+    return:

@@ -39,7 +39,7 @@ node(params.NODE) {
                     ) {
                     sh '''
                         pip install flake8==7.3.0
-                        flake8 . --exclude=venv,.env,__pycache__,.local --max-line-length=90
+                        flake8 . --exclude=venv,.env,__pycache__,.local,.ansible --max-line-length=90
                     '''
                     }
                 },

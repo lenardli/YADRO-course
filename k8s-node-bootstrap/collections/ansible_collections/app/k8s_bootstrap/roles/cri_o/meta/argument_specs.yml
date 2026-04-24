@@ -1,0 +1,9 @@
+---
+argument_specs:
+  main:
+    short_description: Install CRI-O from the OpenSUSE Build Service stable repository (>= 1.32).
+    options:
+      crio_version:
+        type: str
+        description: Stable channel tag used in the OBS path (e.g. v1.32).
+        default: "v1.32"
