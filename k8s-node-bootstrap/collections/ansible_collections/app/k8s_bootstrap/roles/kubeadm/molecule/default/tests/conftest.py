@@ -1,4 +1,7 @@
-"""PyTest fixtures for Molecule + testinfra (avoid clashing with pytest-testinfra's testinfra_hosts)."""
+"""PyTest fixtures for Molecule + testinfra.
+
+Avoid clashing with pytest-testinfra's testinfra_hosts fixture.
+"""
 
 import os
 
@@ -8,7 +11,7 @@ import pytest
 @pytest.fixture(scope="module")
 def ansible_hosts():
     try:
-        import testinfra 
+        __import__("testinfra")
     except ImportError:
         pytest.skip("Test requires testinfra", allow_module_level=True)
     path = os.environ.get("MOLECULE_INVENTORY_FILE")
