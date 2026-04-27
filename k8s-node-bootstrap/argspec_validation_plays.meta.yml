@@ -10,10 +10,10 @@ argument_specs:
       - a.sheynova
     options:
       crio_version:
-        description: Stable CRI-O channel tag used in OBS repository path (e.g. v1.32).
+        description: Stable CRI-O channel tag used in OBS repository path (e.g. v1.35).
         type: str
         required: false
-        default: "v1.32"
+        default: "v1.35"
       kubernetes_version:
         description: Kubernetes apt repository channel under pkgs.k8s.io core/stable (e.g. v1.35).
         type: str
@@ -22,6 +22,6 @@ argument_specs:
     examples: |
       - import_playbook: argspec_validation_plays.yml
         vars:
-          crio_version: "v1.32"
+          crio_version: "v1.35"
           kubernetes_version: "v1.35"
     return:
