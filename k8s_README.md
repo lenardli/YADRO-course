@@ -1,4 +1,4 @@
-## IУстановка Kubernetes 1.35 + CRI-O 1.35 + CALICO
+## Установка Kubernetes 1.35 + CRI-O 1.35 + CALICO
 
 Дополнительный источник при установке: [https://habr.com/ru/articles/725640/](https://habr.com/ru/articles/725640/)
 
@@ -21,7 +21,7 @@
 5. Загрузить модули ядра:
   - `overlay`
   - `br_netfilter`
-6. Применить обязательные sysctl-параметры:
+6. Применить sysctl-параметры:
   - `net.ipv4.ip_forward=1`
   - `net.bridge.bridge-nf-call-iptables=1`
   - `net.bridge.bridge-nf-call-ip6tables=1`
@@ -41,7 +41,7 @@
   - `curl`
   - `gnupg`
 5. Установить необходимые пакеты:
-  - `kubeadm`
+  - `kubeadm (только на master)`
   - `kubelet`
   - `kubectl`
   - `cri-o`
@@ -100,8 +100,7 @@ Worker-узлы присоединить через `kubeadm join` с обяза
 
 Решение  
 
-- Сначала установили через snap
-- Но проблем с запуском контейнеров, а также отрицательных комментриев в чате курса был удален и заменен на зеркало `mirrors.aliyun.com.`
+- Использовать зеркало `mirrors.aliyun.com (сначала пробовался snap, но из-за проблем с безопасностью и проблем с запуском контейнеров был удален)`
 
 ### Проблема 2: kubelet пытался использовать containerd вместо CRI-O
 
@@ -159,8 +158,7 @@ Worker-узлы присоединить через `kubeadm join` с обяза
 #### Симптомы
 
 - `calico-node` в `Init:ImagePullBackOff`;
-- ошибки:
-  - `toomanyrequests` (Docker Hub rate limit);
+- ошибки `toomanyrequests` (Docker Hub rate limit);
 
 #### Причина
 
@@ -174,6 +172,22 @@ Worker-узлы присоединить через `kubeadm join` с обяза
   - `calico/kube-controllers`.
 - Отдельно обновить init-контейнер `mount-bpffs`, который оставался на `docker.io`.
 - Проверить, что все `calico-node` перешли в состояние `Running` на всех нодах.
+
+```bash
+
+kubectl -n kube-system set image daemonset/calico-node \
+
+  calico-node=quay.io/calico/node:v3.27.0 \
+
+  upgrade-ipam=quay.io/calico/cni:v3.27.0 \
+
+  install-cni=quay.io/calico/cni:v3.27.0
+
+kubectl -n kube-system set image deployment/calico-kube-controllers \
+
+  calico-kube-controllers=quay.io/calico/kube-controllers:v3.27.0
+
+```
 
 ### Проблема 6: тестовый pod запускался, но DNS внутри pod не работал
 
