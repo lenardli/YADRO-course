@@ -208,6 +208,20 @@ kubectl -n kube-system set image deployment/calico-kube-controllers \
 - Проверить логи `kube-proxy` и `CoreDNS`;
 - Перезапустить CoreDNS: `kubectl rollout restart deployment -n kube-system coredns`.
 
+### Проблема 7: permission denied при ping внутри контейнера
+
+Симптомы: 
+
+- при выполнении `ping 8.8.8.8` внутри созданного тестового контейнера возникает ошибка:  permission denied (are you root?)
+
+Причина:
+
+- Отсутствие capability NET_RAW у cri-o
+
+Решение:
+
+- [https://habr.com/ru/companies/yadro/articles/914026/](https://habr.com/ru/companies/yadro/articles/914026/)
+
 ---
 
 ## 3. Команды проверки, которые использовались
@@ -220,4 +234,8 @@ kubectl -n kube-system set image deployment/calico-kube-controllers \
 - `kubectl exec -it <pod> -- wget -S -O- http://1.1.1.1 --timeout=5` — проверить исходящую сеть из pod по IP (без DNS).
 - `journalctl -u kubelet -n 200 --no-pager` — посмотреть последние ошибки/предупреждения kubelet на ноде.
 - `crictl --runtime-endpoint unix:///var/run/crio/crio.sock info` — убедиться, что CRI-O runtime отвечает корректно.
+
+
+
+
 
