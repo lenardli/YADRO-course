@@ -19,7 +19,7 @@
 
 | Переменная           | Где используется                                         | Тип   | Значение по умолчанию |
 | -------------------- | -------------------------------------------------------- | ----- | --------------------- |
-| `crio_version`       | `app.k8s_bootstrap.cri_o`                                | `str` | `"v1.32"`             |
+| `crio_version`       | `app.k8s_bootstrap.cri_o`                                | `str` | `"v1.35"`             |
 | `kubernetes_version` | `app.k8s_bootstrap.kubelet`, `app.k8s_bootstrap.kubeadm` | `str` | `"v1.35"`             |
 
 

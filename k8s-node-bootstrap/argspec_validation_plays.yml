@@ -16,4 +16,3 @@
     - role: app.k8s_bootstrap.cri_o
     - role: app.k8s_bootstrap.kubelet
     - role: app.k8s_bootstrap.kubeadm
-      when: inventory_hostname in groups['masters']

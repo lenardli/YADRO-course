@@ -55,9 +55,8 @@
         mode: '0644'
         owner: root
         group: root
+        force: false
       become: true
-      args:
-        creates: /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
     - name: Add Kubernetes APT repository
       ansible.builtin.apt_repository:
@@ -91,3 +90,9 @@
     name: kubelet
     selection: hold
   become: true
+
+- name: Verify kubelet is installed
+  ansible.builtin.command: kubelet --version
+  register: kubelet_check
+  changed_when: false
+  failed_when: kubelet_check.rc != 0
