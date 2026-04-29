@@ -23,9 +23,8 @@
         mode: '0644'
         owner: root
         group: root
+        force: false
       become: true
-      args:
-        creates: /etc/apt/keyrings/cri-o-apt-keyring.gpg
 
     - name: Add CRI-O APT repository
       ansible.builtin.apt_repository:
@@ -69,3 +68,9 @@
     state: started
     daemon_reload: yes
   become: true
+
+- name: Verify CRI-O is installed
+  ansible.builtin.command: crio --version
+  register: crio_check
+  changed_when: false
+  failed_when: crio_check.rc != 0
