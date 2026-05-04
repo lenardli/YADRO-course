@@ -1,6 +1,6 @@
 # Развертывание приложения в k8s
 
-В каталоге `k8s/` манифесты приложения (`deployment` / `service` / `ingress`), **конфигурация системного nginx** перед кластером (`nginx-k8s-ingress-proxy.conf`).
+В каталоге `k8s-deploy-app/` манифесты приложения (`deployment` / `service` / `ingress`), **конфигурация системного nginx** перед кластером (`nginx-k8s-ingress-proxy.conf`).
 
 
 | Файл                           | Роль                                                                                                |
