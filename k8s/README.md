@@ -1,66 +1,71 @@
-# Kubernetes: Deployment и Service
+# Развертывание приложения в k8s
 
-## Как это связано между собой
+В каталоге `k8s/` манифесты приложения (`deployment` / `service` / `ingress`), **конфигурациz системного nginx** перед кластером (`nginx-k8s-ingress-proxy.conf`).
 
-1. **Deployment** создаёт Pod’ы с контейнером приложения и задаёт:
-   - образ (`image`), число реплик (`replicas`);
-   - переменные окружения (например `PORT`);
-   - **liveness/readiness probes** по HTTP на `/info`, чтобы kubelet понимал, жив ли контейнер и можно ли слать ему трафик.
 
-2. У каждого Pod’а в шаблоне есть **метка** `app: yadro-currency-api` (поле `template.metadata.labels`).
+| Файл                           | Роль                                                                                                |
+| ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `deployment.yaml`              | Запуск приложения в контейнерах, **2 реплики**, обновления и самовосстановление Pod’ов              |
+| `service.yaml`                 | **Внутренний** адрес и балансировка между репликами (**ClusterIP**)                                 |
+| `ingress.yaml`                 | путь `/` → сервис приложения через **Ingress Controller** класса `nginx`                            |
+| `nginx-k8s-ingress-proxy.conf` | Конфиг **nginx для каждой ноды с подами**, снаружи **:80**, внутрь — ноды **:NodePort** контроллера |
 
-3. **Service** с типом `ClusterIP`:
-   - **не знает** про Deployment по имени;
-   - выбирает все Pod’ы с метками из `spec.selector` (`app: yadro-currency-api`);
-   - даёт им **один виртуальный IP и DNS-имя** внутри кластера и балансирует трафик между репликами.
 
-**Направление трафика:** клиент → **Service** (DNS/IP) → один из Pod’ов. Deployment к Service сам не обращается — он только поддерживает нужное число Pod’ов.
+---
 
-## Перед запуском
+### `deployment.yaml`
 
-1. Образ должен быть **доступен узлам кластера** (публичный registry или свой + `imagePullSecrets`).
-2. В `deployment.yaml` в поле `spec.template.spec.containers[0].image` укажите **тот же образ и тег**, что после `docker push` (можно синхронизировать с переменной `IMAGE_TAG` из корневого `.env`, заменив хвост тега в строке образа).
+- `**replicas: 2`.** Минимальная отказоустойчивость: при падении одного Pod’а второй продолжает обслуживать запросы.
+- Метка `app: yadro-currency-api` совпадает с селектором Service.
+- **Порт контейнера 8000 и переменная** `PORT`**,**  чтобы приложение могло читать порт из окружения.
+- **Именованный порт `http`.** На него ссылаются пробы и `targetPort` у Service.
+- `**readinessProbe`** **и** `**дivenessProbe`** пробы на ручку `/info` для мониторинга состояния подов и контейнеров.
+- `**imagePullPolicy: IfNotPresent`.** - с учетом частой ошибки pull limited в Docker, выбрана политика сначала искать локальный образ, и если его нет, пулить из Docker Hub.
+- **Security context:** не-root (65532), `readOnlyRootFilesystem`, снятие всех capabilities, вся файловая система контейнера доступна только для чтение, кроме `/tmp`, который смонтирован в /tmp ноды.
+- `**resources.requests` / `limits`** - ограничение ресурсов CPU и RAM для контейнеров.
 
-## Применить манифесты
+### `service.yaml`
 
-Из корня репозитория или из каталога `k8s/`:
+- `**type: ClusterIP`.** Одно DNS-имя и виртуальный IP **внутри** кластера.
 
-```bash
-kubectl apply -f k8s/deployment.yaml
-kubectl apply -f k8s/service.yaml
-```
+**Селектор по меткам Pod’ов -**  `app: yadro-currency-api`.
 
-Проверка:
+- **Порт сервиса 80 и `targetPort: http`.**  Ingress обращается к сервису на **80**, а не к порту контейнера напрямую.
 
-```bash
-kubectl get pods,svc -l app=yadro-currency-api
-kubectl logs -l app=yadro-currency-api --tail=50
-```
+### `ingress.yaml`
 
-## Проверка доступа к `/info`
+- `**ingressClassName: nginx`.** 
+- **Путь `/` и `pathType: Prefix`.**
+- **Backend:** `service` **и порт 80.**
 
-Сервис доступен только **изнутри** кластера (ClusterIP). С машины с `kubectl`:
+### `nginx-k8s-ingress-proxy.conf`
+
+- 
+
+- `**upstream k8s_ingress_http`.** Перечень **backend’ов для прокси**.
+- `least_conn` — выбор апстрима с меньшей текущей нагрузкой.
+- `**keepalive`** — переиспользование соединений к upstream, меньше накладных расходов на TCP.
+- `proxy_pass http://k8s_ingress_http`**.** Отправляет запрос на нодовый NodePort nginx-ingress контроллера.
+
+---
+
+## Проверка доступа к приложению
+
+### Внутри кластера
 
 ```bash
 kubectl port-forward svc/yadro-currency-api 8080:80
 ```
 
-В другом терминале:
-
 ```bash
 curl -sS http://127.0.0.1:8080/info
 ```
 
-Или одноразовый Pod с curl:
+### Снаружи (Ingress)
 
 ```bash
-kubectl run curl-test --rm -it --restart=Never --image=curlimages/curl:latest -- \
-  curl -sS http://yadro-currency-api.default.svc.cluster.local/info
+http://<IP-address>/info
 ```
 
-(если используете не `default`, замените имя namespace в URL).
+---
 
-## Дальше
-
-- Увеличить `spec.replicas` в Deployment для отказоустойчивости.
-- Добавить Ingress и Ingress Controller для доступа **снаружи** кластера.
