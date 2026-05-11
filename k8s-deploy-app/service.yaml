@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: yadro-currency-api
+  labels:
+    app: yadro-currency-api
+spec:
+  type: ClusterIP
+  selector:
+    app: yadro-currency-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
