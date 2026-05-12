@@ -2,12 +2,12 @@ replicaCount: 2
 
 image:
   repository: rina7778/yadro-practical-course
-  tag: latest-c0e3eeb
+  tag: v1.0.0-8eee60d-20260512213607
   pullPolicy: IfNotPresent
 
 imagePullSecrets: []
 
-nameOverride: ""
+nameOverride: "yadro-currency-api"
 # Имена ресурсов в кластере (Deployment/Service/Ingress).
 fullnameOverride: "yadro-currency-api"
 
