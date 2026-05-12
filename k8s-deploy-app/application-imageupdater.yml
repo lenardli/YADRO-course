@@ -8,7 +8,7 @@ spec:
     - namePattern: yadro-currency-api
       images:
         - alias: app
-          imageName: rina7778/yadro-practical-course:latest-c0e3eeb
+          imageName: rina7778/yadro-practical-course:v1.0.0-8eee60d-20260512213607
           commonUpdateSettings:
             updateStrategy: semver
             allowTags: "regexp:^v\\d+\\.\\d+\\.\\d+-[a-f0-9]{7}-\\d{14}$"
