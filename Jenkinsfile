@@ -24,7 +24,6 @@ node(params.NODE) {
     def commit
     def version
     def timestamp 
-    def imageTag
 
     try {
         stage('Checkout') {
