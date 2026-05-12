@@ -21,12 +21,19 @@ node(params.NODE) {
 
     def imageTag
     def imageName
+    def commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+    def version
+    def timestamp 
+    def imageTag
 
     try {
         stage('Checkout') {
             checkout scm
+            commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+            version = readFile('VERSION').trim()
+            timestamp = sh(script: "date +'%Y%m%d%H%M%S'", returnStdout: true).trim()
             imageTag = env.TAG_NAME ?: sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
-            imageName = "${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:latest-${imageTag}"
+            imageTag = env.TAG_NAME ?: "v${version}-${commit}-${timestamp}"
         }
 
         stage('Checks') {

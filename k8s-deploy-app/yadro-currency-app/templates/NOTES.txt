@@ -1,0 +1,5 @@
+1. Проверка внутри кластера:
+   kubectl port-forward svc/{{ include "yadro-currency-app.fullname" . }} 8000:80 -n {{ .Release.Namespace }}
+   curl -sS http://127.0.0.1:8000/info
+
+2. С Ingress (класс nginx): снаружи — http://<IP-ноды>/info (см. README в k8s-deploy-app).
