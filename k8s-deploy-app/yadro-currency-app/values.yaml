@@ -1,57 +1,45 @@
 replicaCount: 2
-
 image:
   repository: rina7778/yadro-practical-course
-  tag: v1.0.0-8eee60d-20260512213607
+  tag: v1.0.1-af9a1b8-20260512225337
   pullPolicy: IfNotPresent
-
 imagePullSecrets: []
-
 nameOverride: "yadro-currency-api"
 # Имена ресурсов в кластере (Deployment/Service/Ingress).
 fullnameOverride: "yadro-currency-api"
-
 # Container listens on this port (app / probes).
 containerPort: 8000
-
 podAnnotations: {}
 podLabels: {}
-
 podSecurityContext:
   runAsUser: 65532
   runAsGroup: 65532
   fsGroup: 65532
-
 containerSecurityContext:
   allowPrivilegeEscalation: false
   readOnlyRootFilesystem: true
   capabilities:
     drop:
-      - ALL
-
+    - ALL
 env:
-  - name: PORT
-    value: "8000"
-
+- name: PORT
+  value: "8000"
 serviceAccount:
   create: false
   automount: false
   annotations: {}
   name: ""
-
 service:
   type: ClusterIP
   port: 80
-
 ingress:
   enabled: true
   className: nginx
   annotations: {}
   host: ""
   paths:
-    - path: /
-      pathType: Prefix
-
+  - path: /
+    pathType: Prefix
 resources:
   requests:
     memory: "64Mi"
@@ -59,24 +47,20 @@ resources:
   limits:
     memory: "256Mi"
     cpu: "500m"
-
 readinessProbe:
   httpGet:
     path: /info
     port: http
   initialDelaySeconds: 5
   periodSeconds: 5
-
 livenessProbe:
   httpGet:
     path: /info
     port: http
   initialDelaySeconds: 15
   periodSeconds: 10
-
 autoscaling:
   enabled: false
-
 nodeSelector: {}
 tolerations: []
 affinity: []
