@@ -5,9 +5,8 @@ image:
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 nameOverride: "yadro-currency-api"
-# Имена ресурсов в кластере (Deployment/Service/Ingress).
+
 fullnameOverride: "yadro-currency-api"
-# Container listens on this port (app / probes).
 containerPort: 8000
 podAnnotations: {}
 podLabels: {}

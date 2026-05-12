@@ -65,14 +65,14 @@ node(params.NODE) {
             )
         }
 
-        conditionalStage(name: 'Build', condition: true) {
+        conditionalStage(name: 'Build', condition: shouldBuild) {
             echo "Building ${imageName}"
             sh """
                 docker build -t ${imageName} .
             """
         }
 
-        conditionalStage(name: 'Push', condition: true) {
+        conditionalStage(name: 'Push', condition: shouldPush) {
             echo "Pushing ${imageName} to Docker Hub"
             withCredentials([usernamePassword(
                 credentialsId: 'docker-hub',

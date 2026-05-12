@@ -8,11 +8,11 @@ spec:
     - namePattern: yadro-currency-api
       images:
         - alias: app
-          imageName: rina7778/yadro-practical-course:v1.0.0-8eee60d-20260512213607
+          imageName: rina7778/yadro-practical-course
           commonUpdateSettings:
             updateStrategy: semver
             forceUpdate: true
-            allowTags: "regexp:^v\\d+\\.\\d+\\.\\d+-(?:\\d{14}-[a-f0-9]{7}|[a-f0-9]{7}-\\d{14})$"
+            allowTags: "regexp:^v\\d+\\.\\d+\\.\\d+-[a-f0-9]{7}-\\d{14}$"
             pullSecret: pullsecret:argocd/dockerhub-secret
           manifestTargets:
             helm:
