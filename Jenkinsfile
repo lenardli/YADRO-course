@@ -29,9 +29,8 @@ node(params.NODE) {
     try {
         stage('Checkout') {
             checkout scm
-            commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
             version = readFile('VERSION').trim()
-            imageTag = env.TAG_NAME ?: "v${version}-${commit}"
+            imageTag = env.TAG_NAME ?: "v${version}"
             imageName = "${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${imageTag}"
         }
 

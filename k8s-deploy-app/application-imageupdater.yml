@@ -12,7 +12,7 @@ spec:
           commonUpdateSettings:
             updateStrategy: newest-build
             forceUpdate: false
-            allowTags: "regexp:^v\\d+\\.\\d+\\.\\d+-[a-f0-9]{7}-\\d{14}$"
+            allowTags: "regexp:^v\\d+\\.\\d+\\.\\d+$"
             pullSecret: pullsecret:argocd/dockerhub-secret
           manifestTargets:
             helm:
