@@ -65,10 +65,13 @@ spec:
           volumeMounts:
             - name: tmp
               mountPath: /tmp
-      {{- with .Values.affinity }}
       affinity:
-        {{- toYaml . | nindent 12 }}
-      {{- end }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  {{- include "yadro-currency-app.selectorLabels" . | nindent 18 }}
+              topologyKey: kubernetes.io/hostname
       volumes:
         - name: tmp
           emptyDir: {}
