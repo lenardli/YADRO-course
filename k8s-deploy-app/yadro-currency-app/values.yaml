@@ -1,7 +1,7 @@
 replicaCount: 2
 image:
   repository: rina7778/yadro-practical-course
-  tag: v1.0.0-5b1c67b-20260519155549
+  tag: v1.0.0-699be97-20260519163304
   pullPolicy: IfNotPresent
 imagePullSecrets: []
 nameOverride: "yadro-currency-api"
