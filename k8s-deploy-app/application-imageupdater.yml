@@ -10,7 +10,7 @@ spec:
         - alias: app
           imageName: rina7778/yadro-practical-course
           commonUpdateSettings:
-            updateStrategy: semver
+            updateStrategy: newest-build
             forceUpdate: true
             allowTags: "regexp:^v\\d+\\.\\d+\\.\\d+-[a-f0-9]{7}-\\d{14}$"
             pullSecret: pullsecret:argocd/dockerhub-secret

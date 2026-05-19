@@ -61,5 +61,13 @@ livenessProbe:
 autoscaling:
   enabled: false
 nodeSelector: {}
-tolerations: []
-affinity: []
+affinity:
+  podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+              - key: "app"
+                operator: In
+                values:
+                - yadro-currency-api
+          topologyKey: "kubernetes.io/hostname" 

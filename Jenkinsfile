@@ -13,11 +13,12 @@ node(params.NODE) {
     Boolean IsTag = env.TAG_NAME != null
     Boolean IsMR = env.CHANGE_ID != null
     Boolean IsMain = env.BRANCH_NAME == 'a.sheynova/main'
+    Boolean IsArgoDeploy = true
 
     Boolean shouldBuild = IsMain || IsMR || IsTag
     Boolean shouldPush = IsMain || IsTag
-    Boolean shouldStaging = IsMain
-    Boolean shouldProduction = IsTag
+    Boolean shouldStaging = IsMain && !IsArgoDeploy
+    Boolean shouldProduction = IsTag && !IsArgoDeploy
 
     def imageTag
     def imageName
