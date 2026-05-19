@@ -11,12 +11,12 @@ properties([
 
 node(params.NODE) {
     Boolean IsTag = env.TAG_NAME != null
-    Boolean IsMR = env.CHANGE_ID != null
+   // Boolean IsMR = env.CHANGE_ID != null
     Boolean IsMain = env.BRANCH_NAME == 'a.sheynova/main'
     Boolean IsArgoDeploy = true
 
     Boolean shouldBuild = IsMain || IsTag
-    Boolean shouldPush = IsMain && IsTag
+    Boolean shouldPush = IsTag
     Boolean shouldStaging = IsMain && !IsArgoDeploy
     Boolean shouldProduction = IsTag && !IsArgoDeploy
 
@@ -31,8 +31,7 @@ node(params.NODE) {
             checkout scm
             commit = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
             version = readFile('VERSION').trim()
-            timestamp = sh(script: "date +'%Y%m%d%H%M%S'", returnStdout: true).trim()
-            imageTag = env.TAG_NAME ?: "v${version}-${commit}-${timestamp}"
+            imageTag = env.TAG_NAME ?: "v${version}-${commit}"
             imageName = "${env.DOCKER_NAMESPACE}/${env.DOCKER_REPO}:${imageTag}"
         }
 
