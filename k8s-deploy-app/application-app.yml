@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://education-git.yadro.com/education/devops/2026/a.sheynova/app.git
     path: k8s-deploy-app/yadro-currency-app
-    targetRevision: a.sheynova/hw9
+    targetRevision: a.sheynova/main
   destination:
     server: https://kubernetes.default.svc
     namespace: default
