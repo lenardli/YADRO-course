@@ -16,7 +16,7 @@ node(params.NODE) {
     Boolean IsArgoDeploy = true
 
     Boolean shouldBuild = IsMain || IsMR || IsTag
-    Boolean shouldPush = IsMain || IsTag
+    Boolean shouldPush = IsMain && IsTag
     Boolean shouldStaging = IsMain && !IsArgoDeploy
     Boolean shouldProduction = IsTag && !IsArgoDeploy
 
